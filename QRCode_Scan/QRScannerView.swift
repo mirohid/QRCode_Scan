@@ -5,89 +5,41 @@
 //  Created by MacMini6 on 26/02/25.
 //
 
-
 import SwiftUI
 import AVFoundation
 
 struct QRScannerView: UIViewControllerRepresentable {
     @Binding var scannedCode: String?
-    @Binding var isScannerPresented: Bool // Controls scanner visibility
+    @Binding var isScanning: Bool
     
-    func makeUIViewController(context: Context) -> ScannerViewController {
-        let controller = ScannerViewController()
-        controller.delegate = context.coordinator
-        return controller
-    }
-    
-    func updateUIViewController(_ uiViewController: ScannerViewController, context: Context) {}
-
     func makeCoordinator() -> Coordinator {
-        Coordinator(self)
+        return Coordinator(scannedCode: $scannedCode, isScanning: $isScanning)
     }
     
-    class Coordinator: NSObject, AVCaptureMetadataOutputObjectsDelegate {
-        let parent: QRScannerView
-
-        init(_ parent: QRScannerView) {
-            self.parent = parent
-        }
-
-        func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
-            if let metadataObject = metadataObjects.first as? AVMetadataMachineReadableCodeObject,
-               let scannedString = metadataObject.stringValue {
-                DispatchQueue.main.async {
-                    self.parent.scannedCode = scannedString
-                    self.parent.isScannerPresented = false // Auto-close scanner
-                }
-            }
-        }
+    func makeUIViewController(context: Context) -> QRScannerViewController {
+        let viewController = QRScannerViewController()
+        viewController.delegate = context.coordinator
+        return viewController
     }
-}
-
-class ScannerViewController: UIViewController {
-    var captureSession: AVCaptureSession?
-    var previewLayer: AVCaptureVideoPreviewLayer!
-    var delegate: QRScannerView.Coordinator?
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
+    
+    func updateUIViewController(_ uiViewController: QRScannerViewController, context: Context) {}
+    
+    class Coordinator: NSObject, QRScannerViewControllerDelegate {
+        @Binding var scannedCode: String?
+        @Binding var isScanning: Bool
         
-        captureSession = AVCaptureSession()
-        
-        guard let videoCaptureDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else { return }
-        
-        let videoInput: AVCaptureDeviceInput
-        do {
-            videoInput = try AVCaptureDeviceInput(device: videoCaptureDevice)
-        } catch {
-            return
+        init(scannedCode: Binding<String?>, isScanning: Binding<Bool>) {
+            _scannedCode = scannedCode
+            _isScanning = isScanning
         }
         
-        if captureSession?.canAddInput(videoInput) == true {
-            captureSession?.addInput(videoInput)
-        } else {
-            return
+        func didScanQRCode(_ code: String) {
+            scannedCode = code
+            isScanning = false
         }
         
-        let metadataOutput = AVCaptureMetadataOutput()
-        if captureSession?.canAddOutput(metadataOutput) == true {
-            captureSession?.addOutput(metadataOutput)
-            metadataOutput.setMetadataObjectsDelegate(delegate, queue: DispatchQueue.main)
-            metadataOutput.metadataObjectTypes = [.qr] // Scans all QR codes
-        } else {
-            return
+        func didCancelScanning() {
+            isScanning = false
         }
-        
-        previewLayer = AVCaptureVideoPreviewLayer(session: captureSession!)
-        previewLayer.frame = view.layer.bounds
-        previewLayer.videoGravity = .resizeAspectFill
-        view.layer.addSublayer(previewLayer)
-        
-        captureSession?.startRunning()
-    }
-
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        captureSession?.stopRunning()
     }
 }

@@ -4,96 +4,106 @@
 //
 //  Created by MacMini6 on 26/02/25.
 //
-
 import SwiftUI
+import CoreBluetooth
 
 struct ContentView: View {
     @State private var scannedCode: String?
-    @State private var showScanner = false // Controls scanner visibility
+    @State private var showScanner = false
+    @State private var pairingMessage: String?
+    @State private var isPairing = false
+    @State private var bluetoothManager = BluetoothManager()
     
     var body: some View {
-        ZStack {
-            VStack(spacing: 20) {
-                Text("QR Code Scanner")
-                    .font(.largeTitle)
-                    .bold()
-                    .foregroundColor(.blue)
-                
-                if let scannedCode = scannedCode {
-                    Text("Scanned Code: \(scannedCode)")
+        VStack(spacing: 20) {
+            Text("Smartwatch QR Scanner")
+                .font(.largeTitle)
+                .bold()
+                .foregroundColor(.blue)
+            
+            if let scannedCode = scannedCode {
+                Button(action: {
+                    handleScannedCode(scannedCode)
+                }) {
+                    Text("📎 \(scannedCode)")
                         .font(.headline)
-                        .foregroundColor(.green)
+                        .foregroundColor(.blue)
                         .padding()
                         .background(Color.black.opacity(0.1))
                         .cornerRadius(10)
                         .padding(.horizontal)
                 }
-                
-                Spacer()
-                
-                // Scan Button
-                Button(action: {
-                    withAnimation {
-                        showScanner = true
-                    }
-                }) {
-                    HStack {
-                        Image(systemName: "qrcode.viewfinder")
-                            .font(.title)
-                        Text("Scan QR Code")
-                            .fontWeight(.bold)
-                    }
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(12)
-                    .shadow(radius: 5)
-                    .padding(.horizontal)
-                }
-                
-                Spacer()
             }
             
-            // Camera Scanner (Appears when button is tapped)
-            if showScanner {
-                ZStack {
-                    Color.black.opacity(0.5)
-                        .edgesIgnoringSafeArea(.all)
-                    
-                    RoundedRectangle(cornerRadius: 15)
-                        .fill(Color.white)
-                        .frame(width: 300, height: 350)
-                        .shadow(radius: 10)
-                        .overlay(
-                            VStack {
-                                // QR Scanner View
-                                QRScannerView(scannedCode: $scannedCode, isScannerPresented: $showScanner)
-                                    .frame(width: 280, height: 280)
-                                    .clipShape(RoundedRectangle(cornerRadius: 15))
-                                
-                                // Cancel Button
-                                Button(action: {
-                                    withAnimation {
-                                        showScanner = false
-                                    }
-                                }) {
-                                    Text("Cancel")
-                                        .font(.headline)
-                                        .foregroundColor(.white)
-                                        .padding()
-                                        .frame(maxWidth: .infinity)
-                                        .background(Color.red)
-                                        .cornerRadius(10)
-                                        .padding(.horizontal, 20)
-                                }
-                            }
-                        )
+            if isPairing {
+                ProgressView("Pairing with smartwatch...")
+            }
+            
+            if let message = pairingMessage {
+                Text(message)
+                    .font(.headline)
+                    .foregroundColor(message == "Paired Successfully 🎉" ? .green : .red)
+                    .padding()
+            }
+            
+            Spacer()
+            
+            Button(action: {
+                showScanner = true
+            }) {
+                HStack {
+                    Image(systemName: "qrcode.viewfinder")
+                        .font(.title)
+                    Text("Scan QR Code")
+                        .fontWeight(.bold)
                 }
-                .transition(.scale)
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color.blue)
+                .foregroundColor(.white)
+                .cornerRadius(12)
+                .shadow(radius: 5)
+                .padding(.horizontal)
+            }
+            .fullScreenCover(isPresented: $showScanner) {
+                QRScannerView(scannedCode: $scannedCode, isScanning: $showScanner)
+            }
+            
+            Spacer()
+        }
+        .onChange(of: scannedCode) { newCode in
+            if let newCode = newCode {
+                pairSmartwatch(with: newCode)
             }
         }
-        .animation(.easeInOut, value: showScanner)
+    }
+    
+    func pairSmartwatch(with qrCode: String) {
+        isPairing = true
+        pairingMessage = nil
+        
+        bluetoothManager.connectToSmartwatch(qrCode: qrCode) { success in
+            DispatchQueue.main.async {
+                isPairing = false
+                pairingMessage = success ? "Paired Successfully 🎉" : "Pairing Failed ❌"
+            }
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
+            if isPairing {
+                isPairing = false
+                pairingMessage = "Pairing Timeout ⏳"
+            }
+        }
+    }
+    
+    func handleScannedCode(_ code: String) {
+        if let url = URL(string: code), url.scheme == "http" || url.scheme == "https" {
+            UIApplication.shared.open(url)
+        } else {
+            UIPasteboard.general.string = code
+            pairingMessage = "Copied to Clipboard ✅"
+        }
     }
 }
 
