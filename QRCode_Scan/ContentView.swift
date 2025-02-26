@@ -34,18 +34,18 @@ struct ContentView: View {
                 // Scan Button
                 Button(action: {
                     withAnimation {
-                        showScanner.toggle()
+                        showScanner = true
                     }
                 }) {
                     HStack {
                         Image(systemName: "qrcode.viewfinder")
                             .font(.title)
-                        Text(showScanner ? "Close Scanner" : "Scan QR Code")
+                        Text("Scan QR Code")
                             .fontWeight(.bold)
                     }
                     .padding()
                     .frame(maxWidth: .infinity)
-                    .background(showScanner ? Color.red : Color.blue)
+                    .background(Color.blue)
                     .foregroundColor(.white)
                     .cornerRadius(12)
                     .shadow(radius: 5)
@@ -63,12 +63,31 @@ struct ContentView: View {
                     
                     RoundedRectangle(cornerRadius: 15)
                         .fill(Color.white)
-                        .frame(width: 300, height: 300)
+                        .frame(width: 300, height: 350)
                         .shadow(radius: 10)
                         .overlay(
-                            QRScannerView(scannedCode: $scannedCode)
-                                .frame(width: 280, height: 280)
-                                .clipShape(RoundedRectangle(cornerRadius: 15))
+                            VStack {
+                                // QR Scanner View
+                                QRScannerView(scannedCode: $scannedCode, isScannerPresented: $showScanner)
+                                    .frame(width: 280, height: 280)
+                                    .clipShape(RoundedRectangle(cornerRadius: 15))
+                                
+                                // Cancel Button
+                                Button(action: {
+                                    withAnimation {
+                                        showScanner = false
+                                    }
+                                }) {
+                                    Text("Cancel")
+                                        .font(.headline)
+                                        .foregroundColor(.white)
+                                        .padding()
+                                        .frame(maxWidth: .infinity)
+                                        .background(Color.red)
+                                        .cornerRadius(10)
+                                        .padding(.horizontal, 20)
+                                }
+                            }
                         )
                 }
                 .transition(.scale)
@@ -77,6 +96,7 @@ struct ContentView: View {
         .animation(.easeInOut, value: showScanner)
     }
 }
+
 #Preview {
     ContentView()
 }

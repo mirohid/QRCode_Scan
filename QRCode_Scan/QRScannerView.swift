@@ -11,6 +11,7 @@ import AVFoundation
 
 struct QRScannerView: UIViewControllerRepresentable {
     @Binding var scannedCode: String?
+    @Binding var isScannerPresented: Bool // Controls scanner visibility
     
     func makeUIViewController(context: Context) -> ScannerViewController {
         let controller = ScannerViewController()
@@ -36,6 +37,7 @@ struct QRScannerView: UIViewControllerRepresentable {
                let scannedString = metadataObject.stringValue {
                 DispatchQueue.main.async {
                     self.parent.scannedCode = scannedString
+                    self.parent.isScannerPresented = false // Auto-close scanner
                 }
             }
         }

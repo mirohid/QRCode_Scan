@@ -10,22 +10,9 @@
 		421F68052D6F47CD00E43832 /* QRCode_Scan.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QRCode_Scan.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		421F68192D6F49BE00E43832 /* Exceptions for "QRCode_Scan" folder in "QRCode_Scan" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				"QRCode-Scan-Info.plist",
-			);
-			target = 421F68042D6F47CD00E43832 /* QRCode_Scan */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		421F68072D6F47CD00E43832 /* QRCode_Scan */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				421F68192D6F49BE00E43832 /* Exceptions for "QRCode_Scan" folder in "QRCode_Scan" target */,
-			);
 			path = QRCode_Scan;
 			sourceTree = "<group>";
 		};
